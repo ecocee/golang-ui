@@ -5,7 +5,7 @@
 | Layer | Technology | Role |
 | --- | --- | --- |
 | Language | Go 1.22+ | Primary language. No cgo in core library. |
-| UI Framework | Fyne v2 | Rendering backend. Provides canvas, input events, window management. All Fyne widgets are wrapped, not replaced. |
+| UI Framework | Fyne v2 (planned, not yet depended on) | Rendering backend. Provides canvas, input events, window management. All Fyne widgets are wrapped, not replaced. The Fyne bridge layer (`internal/fynebridge/`) will be built once Go 1.26 + Fyne v2.7.4 compatibility issues are resolved upstream. |
 | Layout Engine | Custom constraint-based Flexbox | Replaces Fyne's built-in layouts. Computes child positions/sizes from parent constraints. Integrated with the reactive signal system. |
 | State Management | Custom reactive signals runtime | Fine-grained reactivity. Signals drive layout re-computation and component re-render. |
 | Component Library | `pkg/components` | shadcn/ui-inspired declarative components. Stateless, composable, theme-driven. |
@@ -18,7 +18,7 @@
 - `internal/` — Library-private code. Not importable by consumers. Contains the reactive runtime internals, layout engine internals, and Fyne adapter layers.
 - `internal/signals/` — Reactive signals runtime. Dependency tracking, glitch prevention, batching, subscription lifecycle, concurrency safety.
 - `internal/layout/` — Constraint-based Flexbox engine. Node tree, constraint solving, size computation, position allocation.
-- `internal/fynebridge/` — Adapts the layout + signal system to Fyne's `fyne.Widget` interface. This is the only package that imports `fyne/v2` directly in the core library.
+- `internal/fynebridge/` — Adapts the layout + signal system to Fyne's `fyne.Widget` interface. This is the only package that imports `fyne/v2` directly in the core library. Currently a placeholder; Fyne dependency will be added when Go 1.26 + Fyne v2.7.4 compatibility is confirmed.
 - `pkg/` — Public, reusable packages. Safe for external import.
 - `pkg/components/` — UI components. Each component is a pure function of props + state → `fyne.Widget`. No global state, no side effects.
 - `pkg/theme/` — Design tokens and theme system. Consumers override tokens to customize appearance.

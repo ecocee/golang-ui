@@ -19,6 +19,9 @@ Build the reactive signals runtime and design tokens system.
 - `go mod init github.com/ecocee/golang-ui` — module initialized
 - `pkg/theme/` — design tokens (light + dark palettes, spacing, radius, typography)
 - `internal/signals/` — reactive signals runtime (Signal, Computed, Subscribe, Batch) with full race-detector safety
+- `pkg/theme/` — design tokens complete (light + dark palettes, spacing, radius, typography)
+- `cmd/golang-ui/` — demo app runnable, validates signals + tokens end-to-end
+- Fyne bridge layer deferred — Go 1.26.2 + Fyne v2.7.4 have a compiler incompatibility (struct types with methods using Fyne types get silently erased from scope). Will revisit when Fyne releases Go 1.26 support or Go bug is fixed.
 
 ## In Progress
 
