@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -41,8 +42,11 @@ func runDev(args []string) error {
 	return runLiveBackend(isVanilla)
 }
 
-func getLatestGoModTime(isVanilla bool) time.Time {
+func pollFiles(lastMod time.Time, isVanilla bool) (bool, bool, time.Time) {
 	var latest time.Time
+	changedGo := false
+	changedWeb := false
+
 	filepath.WalkDir(".", func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
@@ -56,18 +60,36 @@ func getLatestGoModTime(isVanilla bool) time.Time {
 		}
 		
 		ext := filepath.Ext(path)
-		isGo := ext == ".go"
-		isWeb := isVanilla && (ext == ".html" || ext == ".css" || ext == ".js")
+		isGoFile := ext == ".go"
+		isWebFile := isVanilla && (ext == ".html" || ext == ".css" || ext == ".js")
 		
-		if !d.IsDir() && (isGo || isWeb) {
+		if !d.IsDir() && (isGoFile || isWebFile) {
 			info, _ := d.Info()
-			if info != nil && info.ModTime().After(latest) {
-				latest = info.ModTime()
+			if info != nil {
+				mod := info.ModTime()
+				if mod.After(lastMod) {
+					if mod.After(latest) {
+						latest = mod
+					}
+					if isGoFile {
+						changedGo = true
+					} else if isWebFile {
+						changedWeb = true
+					}
+				}
+				// We also just need to track the absolute latest to initialize
+				if mod.After(latest) {
+					latest = mod
+				}
 			}
 		}
 		return nil
 	})
-	return latest
+	
+	if changedGo || changedWeb {
+		return true, changedGo, latest
+	}
+	return false, false, latest
 }
 
 func runLiveBackend(isVanilla bool) error {
@@ -80,7 +102,7 @@ func runLiveBackend(isVanilla bool) error {
 	fmt.Println()
 
 	var backend *exec.Cmd
-	lastModTime := getLatestGoModTime(isVanilla)
+	_, _, lastModTime := pollFiles(time.Time{}, isVanilla)
 
 	startBackend := func() {
 		fmt.Println(theme.Dim.Render("Compiling..."))
@@ -133,7 +155,7 @@ func runLiveBackend(isVanilla bool) error {
 			fmt.Println(theme.Dim.Render("\nShutting down…"))
 			return nil
 		case <-reloadSig:
-			lastModTime = getLatestGoModTime(isVanilla)
+			_, _, lastModTime = pollFiles(time.Time{}, isVanilla)
 			fmt.Println(theme.Accent.Render("\n🔄 Manual reload triggered! Restarting backend..."))
 			if backend != nil && backend.Process != nil {
 				backend.Process.Kill()
@@ -141,15 +163,21 @@ func runLiveBackend(isVanilla bool) error {
 			}
 			startBackend()
 		case <-ticker.C:
-			mod := getLatestGoModTime(isVanilla)
-			if mod.After(lastModTime) {
+			changed, isGoChange, mod := pollFiles(lastModTime, isVanilla)
+			if changed {
 				lastModTime = mod
-				fmt.Println(theme.Accent.Render("\n🔄 Code changed! Restarting backend..."))
-				if backend != nil && backend.Process != nil {
-					backend.Process.Kill()
-					backend.Wait()
+				if isGoChange {
+					fmt.Println(theme.Accent.Render("\n🔄 Go code changed! Restarting backend..."))
+					if backend != nil && backend.Process != nil {
+						backend.Process.Kill()
+						backend.Wait()
+					}
+					startBackend()
+				} else {
+					fmt.Println(theme.Accent.Render("\n⚡ Web asset changed! Refreshing UI in-place..."))
+					// Trigger our custom hot reload endpoint in the Vanilla backend!
+					http.Get("http://127.0.0.1:8080/__glyra_reload")
 				}
-				startBackend()
 			}
 		}
 	}

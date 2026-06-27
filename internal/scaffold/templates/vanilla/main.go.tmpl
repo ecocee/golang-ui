@@ -32,14 +32,23 @@ func main() {
 		assets = http.FS(sub)
 	}
 
-	go func() {
-		http.Handle("/", http.FileServer(assets))
-		_ = http.ListenAndServe("127.0.0.1:8080", nil)
-	}()
-	time.Sleep(100 * time.Millisecond) // give the local server a moment to bind
-
 	w := webview.New(true)
 	defer w.Destroy()
+
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/", http.FileServer(assets))
+		if isDev {
+			mux.HandleFunc("/__glyra_reload", func(res http.ResponseWriter, req *http.Request) {
+				w.Dispatch(func() {
+					w.Eval("window.location.reload(true);")
+				})
+				res.WriteHeader(200)
+			})
+		}
+		_ = http.ListenAndServe("127.0.0.1:8080", mux)
+	}()
+	time.Sleep(100 * time.Millisecond) // give the local server a moment to bind
 
 	w.SetTitle("{{.ProjectName}}")
 	w.SetSize(900, 650, webview.HintNone)

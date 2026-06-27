@@ -67,7 +67,11 @@ func runBuild(args []string) error {
 			name: "Compiling Go binary",
 			run: func() error {
 				output := binaryName()
-				cmd := exec.Command("go", "build", "-ldflags=-s -w -H=windowsgui", "-o", output, ".")
+				ldflags := "-s -w"
+				if runtime.GOOS == "windows" {
+					ldflags += " -H=windowsgui"
+				}
+				cmd := exec.Command("go", "build", "-ldflags="+ldflags, "-o", output, ".")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				return cmd.Run()
