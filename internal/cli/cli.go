@@ -14,6 +14,8 @@ func Run(args []string) error {
 	switch args[0] {
 	case "init":
 		return runInit(args[1:])
+	case "add":
+		return runAdd(args[1:])
 	case "dev":
 		return runDev(args[1:])
 	case "build":
