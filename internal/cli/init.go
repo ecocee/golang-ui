@@ -34,7 +34,9 @@ func runInit(args []string) error {
 				huh.NewSelect[string]().
 					Title("Choose a frontend template").
 					Options(
-						huh.NewOption("⚛️  Vite + React", "react"),
+						huh.NewOption("⚛️  Vite + React (TypeScript) [Recommended]", "react-ts"),
+						huh.NewOption("⚛️  Vite + React (JavaScript)", "react"),
+						huh.NewOption("▲  Next.js (Static Export)", "nextjs"),
 						huh.NewOption("🌐 Vanilla HTML / CSS / JS", "vanilla"),
 					).
 					Value(&choice),
@@ -45,20 +47,27 @@ func runInit(args []string) error {
 			return err
 		}
 	} else {
-		fmt.Print("Select template  1) Vite + React (recommended)  2) Vanilla HTML/CSS/JS  [1]: ")
+		fmt.Print("Select template  1) React TS  2) React JS  3) Next.js  4) Vanilla HTML/CSS/JS  [1]: ")
 		reader := bufio.NewReader(os.Stdin)
 		choice, _ = reader.ReadString('\n')
 		choice = strings.TrimSpace(choice)
 	}
 
-	if choice == "2" {
-		tmpl = scaffold.Vanilla
-	} else {
+	switch choice {
+	case "2", "react":
 		tmpl = scaffold.React
+	case "3", "nextjs":
+		tmpl = scaffold.NextJS
+	case "4", "vanilla":
+		tmpl = scaffold.Vanilla
+	default:
+		tmpl = scaffold.ReactTS
 	}
 
+	title := name
+
 	// Scaffold.
-	if err := scaffold.New(name, tmpl); err != nil {
+	if err := scaffold.New(name, title, tmpl); err != nil {
 		return err
 	}
 

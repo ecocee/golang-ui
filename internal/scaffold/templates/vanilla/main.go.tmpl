@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/webview/webview_go"
@@ -18,13 +19,21 @@ import (
 var frontendFS embed.FS
 
 func main() {
-	assets, err := fs.Sub(frontendFS, "frontend")
-	if err != nil {
-		panic(err)
+	isDev := os.Getenv("GLYRA_DEV") == "true"
+
+	var assets http.FileSystem
+	if isDev {
+		assets = http.Dir("frontend")
+	} else {
+		sub, err := fs.Sub(frontendFS, "frontend")
+		if err != nil {
+			panic(err)
+		}
+		assets = http.FS(sub)
 	}
 
 	go func() {
-		http.Handle("/", http.FileServer(http.FS(assets)))
+		http.Handle("/", http.FileServer(assets))
 		_ = http.ListenAndServe("127.0.0.1:8080", nil)
 	}()
 	time.Sleep(100 * time.Millisecond) // give the local server a moment to bind

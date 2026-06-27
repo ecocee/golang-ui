@@ -24,21 +24,23 @@ No Node.js runtime to ship. No Chromium bundle. The OS's own webview, a Go binar
 | **Boot Time** | **< 0.1s** | ~2.5s | < 0.5s |
 | **Frontend** | Any (React, Vue, Vite, plain HTML) | Any | Any |
 
-- **One binary, nothing else** — `glyra build` embeds your built frontend straight into the Go binary with `go:embed`. There's no `frontend/` folder to ship alongside it.
-- **Real dev loop** — `glyra dev` runs Vite's dev server and the Go backend together, wired for hot reload, and shuts both down cleanly on Ctrl+C.
-- **Native OS rendering** — WebKit on macOS, Edge WebView2 on Windows, WebKitGTK on Linux.
+## ✨ Features
 
-## 📦 Getting Started
+- **Blazing Fast Native Desktop Apps**: Combines the performance of Go with modern web interfaces.
+- **Multiple Frontends**: Supports React (TypeScript/JavaScript), Next.js, and Vanilla HTML/CSS out of the box.
+- **Flutter-like Hot Reloading**: Native automatic code reloading! Editing frontend code triggers HMR, and editing `.go` files automatically restarts the native backend! (You can also press `r` + `Enter` to manually reload).
+- **Native OS Packaging**: Automatically creates macOS `.app` bundles, Windows `.syso` resources (via `go-winres`), and Linux `.desktop` entries on build.
 
-### 1. Install the CLI
+## 🚀 Getting Started
+
+Check out the full guide in the [docs/getting-started.md](docs/getting-started.md) or dive right in:
+
 ```bash
+# 1. Install the CLI
 go install github.com/ecocee/golang-ui/cmd/glyra@latest
-```
 
-### 2. Create a project
-```bash
+# 2. Scaffold a new project
 glyra init my-app
-```
 You'll be asked to pick a frontend: **Vite + React** (recommended) or **plain HTML/CSS/JS**. Glyra scaffolds the project and wires up its Go module for you.
 
 ### 3. Develop

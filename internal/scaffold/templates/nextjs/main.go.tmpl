@@ -1,0 +1,64 @@
+package main
+
+import (
+	"embed"
+	"fmt"
+	"io/fs"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+	"github.com/webview/webview_go"
+)
+
+//go:embed all:frontend/out
+var assets embed.FS
+
+func serveFallback(subFS fs.FS) http.Handler {
+	fsSrv := http.FileServer(http.FS(subFS))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		} else if !strings.HasSuffix(path, ".html") {
+			path = path + ".html"
+		}
+		
+		_, err := fs.Stat(subFS, path)
+		if os.IsNotExist(err) {
+			r.URL.Path = "/"
+		} else {
+			r.URL.Path = "/" + path
+		}
+		fsSrv.ServeHTTP(w, r)
+	})
+}
+
+func main() {
+	isDev := os.Getenv("GLYRA_DEV") == "true"
+	w := webview.New(isDev)
+	defer w.Destroy()
+
+	w.SetTitle("{{.Title}}")
+	w.SetSize(900, 650, webview.HintNone)
+
+	w.Bind("GetSystemStatus", func() string {
+		return "Next.js successfully talking to Go Backend!"
+	})
+
+	if isDev {
+		w.Navigate("http://localhost:3000")
+		fmt.Println("Glyra Backend started in DEV mode.")
+	} else {
+		subFS, _ := fs.Sub(assets, "frontend/out")
+		go func() {
+			http.Handle("/", serveFallback(subFS))
+			http.ListenAndServe("127.0.0.1:8080", nil)
+		}()
+		time.Sleep(100 * time.Millisecond)
+		w.Navigate("http://127.0.0.1:8080")
+		fmt.Println("Glyra Backend started in PROD mode.")
+	}
+
+	w.Run()
+}

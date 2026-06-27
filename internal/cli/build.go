@@ -44,12 +44,30 @@ func runBuild(args []string) error {
 		})
 	}
 
+	steps = append(steps, step{
+		name: "Generating App Icons",
+		run: func() error {
+			if !fileExists("assets/appicon.png") {
+				return nil
+			}
+			if runtime.GOOS == "windows" {
+				os.WriteFile("winres.json", []byte(`{"RT_ICON":{"MAIN":{"0000":["assets/appicon.png"]}}}`), 0644)
+				cmd := exec.Command("go", "run", "github.com/tc-hib/go-winres@latest", "make")
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				cmd.Run()
+				os.Remove("winres.json")
+			}
+			return nil
+		},
+	})
+
 	steps = append(steps,
 		step{
 			name: "Compiling Go binary",
 			run: func() error {
 				output := binaryName()
-				cmd := exec.Command("go", "build", "-ldflags=-s -w", "-o", output, ".")
+				cmd := exec.Command("go", "build", "-ldflags=-s -w -H=windowsgui", "-o", output, ".")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				return cmd.Run()
@@ -61,6 +79,66 @@ func runBuild(args []string) error {
 				output := binaryName()
 				if !fileExists(output) {
 					return fmt.Errorf("binary %s not found after build", output)
+				}
+				return nil
+			},
+		},
+		step{
+			name: "Packaging for OS",
+			run: func() error {
+				output := binaryName()
+				if runtime.GOOS == "darwin" {
+					appName := output + ".app"
+					os.MkdirAll(filepath.Join(appName, "Contents", "MacOS"), 0755)
+					os.MkdirAll(filepath.Join(appName, "Contents", "Resources"), 0755)
+					
+					os.Rename(output, filepath.Join(appName, "Contents", "MacOS", output))
+					
+					plist := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>%s</string>
+	<key>CFBundleIconFile</key>
+	<string>icon.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.glyra.%s</string>
+</dict>
+</plist>`, output, output)
+					os.WriteFile(filepath.Join(appName, "Contents", "Info.plist"), []byte(plist), 0644)
+					
+					if fileExists("assets/appicon.png") {
+						os.MkdirAll("assets/icon.iconset", 0755)
+						
+						sizes := []string{"128", "256", "512"}
+						for _, size := range sizes {
+							cmd := exec.Command("sips", "-z", size, size, "assets/appicon.png", "--out", fmt.Sprintf("assets/icon.iconset/icon_%sx%s.png", size, size))
+							cmd.Run()
+							
+							// Also add @2x retina variants
+							cmd2x := exec.Command("sips", "-z", size, size, "assets/appicon.png", "--out", fmt.Sprintf("assets/icon.iconset/icon_%sx%s@2x.png", size, size))
+							cmd2x.Run()
+						}
+						
+						cmd := exec.Command("iconutil", "-c", "icns", "assets/icon.iconset", "-o", filepath.Join(appName, "Contents", "Resources", "icon.icns"))
+						if err := cmd.Run(); err != nil {
+							fmt.Println("\nWarning: Failed to generate Mac icon. Ensure assets/appicon.png is a valid square PNG.")
+						}
+						os.RemoveAll("assets/icon.iconset")
+					}
+					
+					// Force macOS Finder to refresh the app icon cache
+					exec.Command("touch", appName).Run()
+				} else if runtime.GOOS == "linux" {
+					wd, _ := os.Getwd()
+					desktop := fmt.Sprintf(`[Desktop Entry]
+Type=Application
+Name=%s
+Exec=%s/%s
+Icon=%s/assets/appicon.png
+Terminal=false`, output, wd, output, wd)
+					os.WriteFile(output+".desktop", []byte(desktop), 0644)
 				}
 				return nil
 			},

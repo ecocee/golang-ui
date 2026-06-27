@@ -1,6 +1,7 @@
 package scaffold
 
 import (
+	"embed"
 	"fmt"
 	"io/fs"
 	"os"
@@ -9,23 +10,29 @@ import (
 	"text/template"
 )
 
+//go:embed all:templates
+var templatesFS embed.FS
+
 // Template identifies which starter frontend a project is scaffolded with.
 type Template string
 
 const (
 	React   Template = "react"
+	ReactTS Template = "react-ts"
+	NextJS  Template = "nextjs"
 	Vanilla Template = "vanilla"
 )
 
 // Data is the set of variables available inside every *.tmpl file.
 type Data struct {
-	ProjectName string // used for display: window titles, READMEs, headings
+	ProjectName string // used for package names or directory names
 	PackageName string // lowercased, npm-safe form of ProjectName
+	Title       string // Human readable app title for window and HTML
 }
 
 // New scaffolds a brand new Glyra project named `name` on disk using
 // `tmpl`, then initializes its Go module.
-func New(name string, tmpl Template) error {
+func New(name, title string, tmpl Template) error {
 	if _, err := os.Stat(name); err == nil {
 		return fmt.Errorf("directory %q already exists", name)
 	}
@@ -33,6 +40,7 @@ func New(name string, tmpl Template) error {
 	data := Data{
 		ProjectName: name,
 		PackageName: strings.ToLower(name),
+		Title:       title,
 	}
 
 	fmt.Printf("⚡ Scaffolding %s template...\n", tmpl)

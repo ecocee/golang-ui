@@ -1,0 +1,50 @@
+package main
+
+import (
+	"embed"
+	"fmt"
+	"io/fs"
+	"net/http"
+	"time"
+
+	"github.com/webview/webview_go"
+)
+
+// The frontend is embedded directly into the binary at build time, so the
+// compiled app is a single portable file — no frontend/ folder needed
+// alongside it at runtime.
+//
+//go:embed frontend
+var frontendFS embed.FS
+
+func main() {
+	assets, err := fs.Sub(frontendFS, "frontend")
+	if err != nil {
+		panic(err)
+	}
+
+	go func() {
+		http.Handle("/", http.FileServer(http.FS(assets)))
+		_ = http.ListenAndServe("127.0.0.1:8080", nil)
+	}()
+	time.Sleep(100 * time.Millisecond) // give the local server a moment to bind
+
+	w := webview.New(true)
+	defer w.Destroy()
+
+	w.SetTitle("app")
+	w.SetSize(900, 650, webview.HintNone)
+
+	// Bridge: exposes Go functions to the frontend as window.GetSystemStatus()
+	// and window.Echo(). The frontend calls these from JS to demonstrate
+	// the Go ↔ webview bridge.
+	w.Bind("GetSystemStatus", func() string {
+		return "All systems optimal. Go backend runninperfectly!"
+	})
+	w.Bind("Echo", func(msg string) string {
+		return fmt.Sprintf("Go received: %s", msg)
+	})
+
+	w.Navigate("http://127.0.0.1:8080")
+	w.Run()
+}
