@@ -20,8 +20,8 @@ Build the reactive signals runtime and design tokens system.
 - `pkg/theme/` — design tokens (light + dark palettes, spacing, radius, typography)
 - `internal/signals/` — reactive signals runtime (Signal, Computed, Subscribe, Batch) with full race-detector safety
 - `pkg/theme/` — design tokens complete (light + dark palettes, spacing, radius, typography)
-- `cmd/golang-ui/` — demo app runnable, validates signals + tokens end-to-end
-- Fyne bridge layer deferred — Go 1.26.2 + Fyne v2.7.4 have a compiler incompatibility (struct types with methods using Fyne types get silently erased from scope). Will revisit when Fyne releases Go 1.26 support or Go bug is fixed.
+- `cmd/golang-ui/` — demo app runnable, validates webview backend + tokens end-to-end
+- Fyne bridge layer abandoned — Migrated to a Tauri-style WebView architecture (`github.com/webview/webview_go`) to avoid Go 1.26 Fyne compiler bugs and fully embrace web-native CSS styling (shadcn-ui style).
 
 ## In Progress
 
@@ -45,11 +45,10 @@ Build the reactive signals runtime and design tokens system.
 
 ## Architecture Decisions
 
-- **Fyne as rendering backend** — pure Go, mature, cross-platform. Isolated to `internal/fynebridge/`.
-- **Custom Flexbox layout engine** — Fyne's built-in layouts are too limited. Constraint-based model. Flexbox only for v1; Grid deferred.
-- **Custom reactive signals runtime** — no existing Go library fits. Full system: dependency tracking, glitch prevention, batching, memoization, concurrency safety.
-- **shadcn-style declarative API** — components as pure functions of props to `fyne.Widget`. Familiar, composable.
-- **Hybrid theming** — global design tokens for consistency, per-component variant/size props for escape hatches.
+- **WebView as rendering backend** — Tauri-style architecture (`webview_go`). Solves the Go 1.26 bug, keeps the backend in pure Go, and allows using native CSS and HTML for perfect shadcn/ui parity.
+- **Web-native layout engine** — Replaced custom layout engine plans with CSS Flexbox/Grid via WebView.
+- **Custom reactive signals runtime** — Go maintains the source of truth, firing updates to the DOM via JS bindings.
+- **shadcn-style declarative API** — Using CSS tokens directly mapped to shadcn-ui (Zinc palette).
 - **Desktop-only v1** — Windows, macOS, Linux. Mobile and web are future possibilities, not current targets.
 - **No CLI in v1** — `go get` is sufficient. CLI tooling deferred until component set justifies it.
 
