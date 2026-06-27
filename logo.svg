@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Glyra logo">
+  <defs>
+    <!-- Background gradient: deep slate to midnight -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <!-- The "G" mark gradient: cyan → violet (Go meets the web) -->
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="55%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <!-- Soft glow for the ring -->
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0.35"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Rounded square "app icon" background -->
+  <rect x="2" y="2" width="252" height="252" rx="56" ry="56" fill="url(#bg)"/>
+  <!-- Subtle inner border -->
+  <rect x="2" y="2" width="252" height="252" rx="56" ry="56" fill="none" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Outer ring: the "webview window" frame, broken open on the right -->
+  <path d="M 88 64
+           A 56 56 0 1 0 168 64
+           L 168 128
+           A 56 56 0 1 1 88 128
+           Z"
+        fill="none" stroke="url(#ring)" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- The "G" counter-stroke: a tapered bar suggesting the open counter of the letter G -->
+  <path d="M 156 92 L 156 148 A 40 40 0 0 0 156 92"
+        fill="none" stroke="url(#mark)" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Go-gopher-inspired ear nub: a small circle top-left, nodding to Go -->
+  <circle cx="70" cy="74" r="9" fill="url(#mark)"/>
+
+  <!-- Bridge dot: the connection point between Go and the web -->
+  <circle cx="184" cy="172" r="10" fill="url(#mark)" filter="url(#glow)"/>
+</svg>

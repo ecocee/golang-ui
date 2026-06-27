@@ -1,71 +1,181 @@
 <div align="center">
-  <img src="https://ecocee.in/logo.png" alt="Glyra Logo" width="200" height="auto" />
-  <h1>Glyra</h1>
-  <p><strong>Build smaller, faster, and more secure desktop applications with Go.</strong></p>
 
-  [![Developed by Ecocee](https://img.shields.io/badge/Developed_by-Ecocee_Team-blue?style=for-the-badge)](https://ecocee.in)
-  [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
-  [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+<img src="logo.svg" alt="Glyra Logo" width="120" height="auto" />
+
+# Glyra
+
+**Build smaller, faster, and more secure desktop applications with Go.**
+
+[![Developed by Ecocee](https://img.shields.io/badge/Developed_by-Ecocee_Team-blue?style=for-the-badge)](https://ecocee.in)
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+
+<p>
+  <a href="#-quick-start"><b>Quick Start</b></a> ·
+  <a href="#-features"><b>Features</b></a> ·
+  <a href="#-the-go--js-bridge"><b>Go ↔ JS Bridge</b></a> ·
+  <a href="#-cli-reference"><b>CLI Reference</b></a> ·
+  <a href="#-documentation"><b>Docs</b></a>
+</p>
+
 </div>
 
----
+<br />
 
-**Glyra** is a desktop application framework developed by the [Ecocee Team](https://ecocee.in). It lets you build cross-platform desktop apps using web technologies (HTML, CSS, JS, React, Vite) for the frontend, and the speed of Go for the backend.
+**Glyra** is a desktop application framework by the [Ecocee Team](https://ecocee.in). It lets you build cross-platform desktop apps with web technologies on the frontend and Go on the backend — no Node.js runtime to ship, no Chromium bundle to carry. Just the OS's native webview, a single Go binary, and your frontend embedded inside it.
 
-No Node.js runtime to ship. No Chromium bundle. The OS's own webview, a Go binary, and your frontend embedded straight inside it.
+<br />
 
-## 🚀 Why Glyra?
+## ✨ Why Glyra?
 
-| Feature | Glyra | Electron | Tauri |
-| :--- | :--- | :--- | :--- |
-| **Backend Language** | **Go** | Node.js | Rust |
-| **Binary Size** | **~5 MB** | ~150 MB | ~10 MB |
-| **Memory Usage** | **~20 MB** | ~200+ MB | ~30 MB |
-| **Boot Time** | **< 0.1s** | ~2.5s | < 0.5s |
-| **Frontend** | Any (React, Vue, Vite, plain HTML) | Any | Any |
+<table>
+<tr>
+<th align="left">Feature</th>
+<th align="center">Glyra</th>
+<th align="center">Electron</th>
+<th align="center">Tauri</th>
+</tr>
+<tr>
+<td>Backend Language</td>
+<td align="center"><b>Go</b></td>
+<td align="center">Node.js</td>
+<td align="center">Rust</td>
+</tr>
+<tr>
+<td>Binary Size</td>
+<td align="center"><b>~5 MB</b></td>
+<td align="center">~150 MB</td>
+<td align="center">~10 MB</td>
+</tr>
+<tr>
+<td>Memory Usage</td>
+<td align="center"><b>~20 MB</b></td>
+<td align="center">~200+ MB</td>
+<td align="center">~30 MB</td>
+</tr>
+<tr>
+<td>Boot Time</td>
+<td align="center"><b>&lt; 0.1s</b></td>
+<td align="center">~2.5s</td>
+<td align="center">&lt; 0.5s</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td align="center">React, Next.js, Svelte, plain HTML</td>
+<td align="center">Any</td>
+<td align="center">Any</td>
+</tr>
+</table>
 
-## ✨ Features
+<br />
 
-- **Blazing Fast Native Desktop Apps**: Combines the performance of Go with modern web interfaces.
-- **Multiple Frontends**: Supports React (TypeScript/JavaScript), Next.js, and Vanilla HTML/CSS out of the box.
-- **Flutter-like Hot Reloading**: Native automatic code reloading! Editing frontend code triggers HMR, and editing `.go` files automatically restarts the native backend! (You can also press `r` + `Enter` to manually reload).
-- **Native OS Packaging**: Automatically creates macOS `.app` bundles, Windows `.syso` resources (via `go-winres`), and Linux `.desktop` entries on build.
+## 🧩 Features
 
-## 🚀 Getting Started
+- 🚀 **Native desktop apps with Go** — the performance of Go with modern web interfaces
+- 🎨 **Multiple frontend templates** — React (TS/JS), Next.js, Svelte, and vanilla HTML/CSS, scaffolded in seconds
+- 🔥 **Flutter-like hot reloading** — frontend edits trigger HMR through Vite/Next; editing `.go` files automatically recompiles and relaunches the backend. Press `r` + `Enter` to reload manually
+- 🔌 **Go ↔ JS bridge** — bind a Go function once, call it from JavaScript as `await window.MyFunction()`. No HTTP, no WebSockets, no CORS
+- 🧱 **Component generator** — drop shadcn/ui-style components into your project with `glyra add <name>`
+- 📦 **Native OS packaging** — automatic macOS `.app` bundles, Windows `.syso` resources, and Linux `.desktop` entries on build
 
-Check out the full guide in the [docs/getting-started.md](docs/getting-started.md) or dive right in:
+<br />
+
+## ⚡ Quick Start
+
+### 1. Install the CLI
 
 ```bash
-# 1. Install the CLI
 go install github.com/ecocee/golang-ui/cmd/glyra@latest
+```
 
-# 2. Scaffold a new project
+### 2. Scaffold a project
+
+```bash
 glyra init my-app
-You'll be asked to pick a frontend: **Vite + React** (recommended) or **plain HTML/CSS/JS**. Glyra scaffolds the project and wires up its Go module for you.
+```
+
+You'll be prompted to choose a frontend template:
+
+| # | Template | Stack |
+|:-:|:---------|:------|
+| 1 | **Vite + React (TypeScript)** · *Recommended* | React + Vite + TS |
+| 2 | Vite + React (JavaScript) | React + Vite |
+| 3 | Next.js (Static Export) | Next.js |
+| 4 | Vanilla HTML / CSS / JS | No framework |
+
+Glyra generates the project, wires up the Go module, and runs `npm install` automatically.
 
 ### 3. Develop
+
 ```bash
 cd my-app
 glyra dev
 ```
-For the React template this starts the Vite dev server *and* the Go backend together, with hot reload, and stops both when you hit Ctrl+C. The vanilla template just runs the Go backend directly — there's no bundler to babysit.
+
+For the React and Next.js templates this starts the Vite/Next dev server **and** the Go backend together. Frontend edits hot-reload instantly; `.go` edits trigger a backend recompile and relaunch. The vanilla template runs the Go backend directly — no bundler required.
 
 ### 4. Ship a production binary
+
 ```bash
 glyra build
 ```
-This runs `npm run build` (if there's a frontend build step) and then compiles a single Go binary with the built frontend embedded inside it via `go:embed`. The result is one file — copy it anywhere, no `frontend/` directory required.
 
-## 🏗️ Project Structure
+Glyra builds your frontend into static assets, then compiles a single Go binary with the UI embedded via `//go:embed`. The result is one file — copy it anywhere, no `frontend/` directory required.
 
-A scaffolded project looks like this:
+<br />
+
+## 🎨 Adding UI Components
+
+Drop pre-built, shadcn/ui-style components into your React or Next.js project:
+
+```bash
+glyra add button
+glyra add card
+glyra add input
+glyra add checkbox
+glyra add table
+glyra add dialog
+```
+
+Components are written to `frontend/src/components/ui/` and can be composed or customized freely.
+
+<br />
+
+## 🔌 The Go ↔ JS Bridge
+
+Binding a Go function exposes it globally on the `window` object. The call is always async and returns a Promise.
+
+**Backend (Go)**
+
+```go
+w.Bind("GetSystemStatus", func() string {
+    return "running"
+})
+```
+
+**Frontend (JavaScript / TypeScript)**
+
+```typescript
+const status = await window.GetSystemStatus();
+console.log(status); // "running"
+```
+
+For larger applications, register whole services at once with `api.Register("Auth", &AuthService{})` — every exported method becomes available as `window.Auth_<Method>()`. See the [API reference](docs/api.md) for details.
+
+Because the frontend runs inside a native webview, bindings are available directly on `window` without HTTP, WebSockets, or CORS overhead.
+
+<br />
+
+## 📁 Project Structure
+
+A scaffolded React project looks like this:
 
 ```
 my-app/
 ├── go.mod
 ├── main.go              # Go backend + webview bootstrap
 └── frontend/
-    ├── package.json      # React template only
+    ├── package.json
     ├── vite.config.js
     ├── index.html
     └── src/
@@ -75,31 +185,59 @@ my-app/
         └── index.css
 ```
 
-The Go ↔ JS bridge is a single call: `w.Bind("GetSystemStatus", func() string { ... })` on the Go side becomes `window.GetSystemStatus()` in the frontend — async, and ready to extend with your own bound functions.
+<br />
 
-## 🛠️ Glyra CLI internals
+## 🖥️ CLI Reference
 
-The CLI itself (this repository) is organized for easy extension:
+| Command | Description |
+|:--------|:-------------|
+| `glyra init <name>` | Scaffold a new project |
+| `glyra dev` | Run backend + frontend with hot reload |
+| `glyra build` | Compile an optimized, standalone binary |
+| `glyra add <component>` | Add a UI component to the frontend |
+| `glyra version` | Print the CLI version |
+| `glyra help` | Show available commands |
+
+<br />
+
+## 📚 Documentation
+
+- 📖 [Getting Started](docs/getting-started.md) — full walkthrough from install to production
+- 🔌 [API Reference](docs/api.md) — the Go ↔ JavaScript bridge in depth
+- 🎨 [Templates & Icons](docs/templates-and-icons.md) — customizing app icons and native packaging
+
+<br />
+
+<details>
+<summary><b>🗂️ Repository Layout</b> (for contributors)</summary>
+
+<br />
 
 ```
-cmd/glyra/             entrypoint
-internal/cli/          command implementations (init, dev, build, help, ...)
-internal/scaffold/     the templating engine
-internal/scaffold/templates/
-    ├── vanilla/        plain HTML/CSS/JS starter
-    └── react/          Vite + React starter
+cmd/glyra/                        CLI entrypoint
+internal/cli/                     command implementations (init, dev, build, add, …)
+internal/scaffold/                templating engine
+internal/scaffold/templates/      vanilla · react · react-ts · nextjs · svelte
+pkg/api/                          Go ↔ WebView IPC bridge
+pkg/dialog/                       native OS dialog helpers
+pkg/tray/                         native system tray support
+pkg/license/                      hardware-locked licensing utilities
 ```
 
-Starter templates live as real files under `internal/scaffold/templates/`, embedded into the CLI binary at compile time with `go:embed`. Any file ending in `.tmpl` is rendered through `text/template` (so it can use `{{.ProjectName}}` / `{{.PackageName}}`) when a project is generated; everything else is copied byte-for-byte. Adding a new starter template is just adding a new folder there — no Go string literals to edit.
+Starter templates live as real files under `internal/scaffold/templates/`, embedded into the CLI binary at compile time with `//go:embed`. Files ending in `.tmpl` are rendered through `text/template` (so they can use `{{.ProjectName}}` and `{{.PackageName}}`); everything else is copied byte-for-byte. Adding a new template is just adding a new folder — no Go string literals to edit.
 
-## 📖 Documentation
+</details>
 
-Check out the `/docs` folder for guides on:
-- Adding your own Go ↔ JS bound functions
-- Customizing the webview window (size, title, menus)
-- Using the design tokens in the included templates
+<br />
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. If you're proposing a new frontend template or a sizable feature, please open an issue first so we can talk through the approach.
+
+<br />
 
 ---
+
 <div align="center">
-  <sub>Built with ❤️ by the <a href="https://ecocee.in">Ecocee Team</a></sub>
+  <sub>Built with ❤️ by the <a href="https://ecocee.in">Ecocee Team</a> · MIT License</sub>
 </div>
