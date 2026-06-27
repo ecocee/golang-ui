@@ -1,0 +1,58 @@
+package main
+
+import (
+	"embed"
+	"flag"
+	"fmt"
+	"io/fs"
+	"net/http"
+	"time"
+
+	"github.com/webview/webview_go"
+)
+
+// In dev mode the app connects to the Vite dev server (npm run dev) for
+// hot reload. In production the built frontend (frontend/dist, produced
+// by `npm run build`) is embedded directly into the binary, so the
+// compiled app is a single portable file.
+//
+//go:embed all:frontend/dist
+var distFS embed.FS
+
+func main() {
+	dev := flag.Bool("dev", false, "connect to the Vite dev server instead of the embedded build")
+	flag.Parse()
+
+	w := webview.New(true)
+	defer w.Destroy()
+
+	w.SetTitle("{{.ProjectName}}")
+	w.SetSize(900, 650, webview.HintNone)
+
+	// Bridge: exposes Go functions to React as window.GetSystemStatus() and
+	// window.Echo(). The frontend calls these from JS to demonstrate the
+	// Go ↔ webview bridge.
+	w.Bind("GetSystemStatus", func() string {
+		return "All systems optimal. Go backend running perfectly!"
+	})
+	w.Bind("Echo", func(msg string) string {
+		return fmt.Sprintf("Go received: %s", msg)
+	})
+
+	if *dev {
+		w.Navigate("http://localhost:5173")
+	} else {
+		assets, err := fs.Sub(distFS, "frontend/dist")
+		if err != nil {
+			panic(err)
+		}
+		go func() {
+			http.Handle("/", http.FileServer(http.FS(assets)))
+			_ = http.ListenAndServe("127.0.0.1:8080", nil)
+		}()
+		time.Sleep(100 * time.Millisecond)
+		w.Navigate("http://127.0.0.1:8080")
+	}
+
+	w.Run()
+}

@@ -1,0 +1,74 @@
+import { useState, useEffect } from 'react'
+import './App.css'
+
+function App() {
+  const [status, setStatus] = useState('Waiting for Go backend…')
+  const [count, setCount] = useState(0)
+  const [echoInput, setEchoInput] = useState('')
+  const [echoReply, setEchoReply] = useState('—')
+  const [bridgeOk, setBridgeOk] = useState(false)
+
+  useEffect(() => {
+    const ok = typeof window.Echo === 'function' && typeof window.GetSystemStatus === 'function'
+    setBridgeOk(ok)
+    if (!ok) {
+      setStatus('⚠ Go bridge not available')
+    }
+  }, [])
+
+  const checkStatus = async () => {
+    setStatus('Pinging…')
+    try {
+      const res = await window.GetSystemStatus()
+      setStatus(res)
+    } catch (err) {
+      setStatus('Error communicating with Go backend.')
+    }
+  }
+
+  const sendEcho = async () => {
+    try {
+      const reply = await window.Echo(echoInput || '(empty)')
+      setEchoReply(reply)
+    } catch (err) {
+      setEchoReply('Error: ' + err.message)
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <div className="glass-card">
+        <h1>{{.ProjectName}}</h1>
+        <p>Go ↔ JS bridge demo — click a button to call into your Go backend.</p>
+
+        <div className="bridge-status">
+          <span className={'dot' + (bridgeOk ? ' connected' : '')}></span>
+          <span>{bridgeOk ? 'Go bridge connected' : 'Go bridge disconnected'}</span>
+        </div>
+
+        <div className="bridge-row">
+          <div className="bridge-card">
+            <div className="bridge-label">JS counter</div>
+            <div className="bridge-value">{count}</div>
+            <button onClick={() => setCount(c => c + 1)}>Increment</button>
+          </div>
+
+          <div className="bridge-card">
+            <div className="bridge-label">Go echo</div>
+            <input type="text" value={echoInput} onChange={e => setEchoInput(e.target.value)} placeholder="type a message…" />
+            <button onClick={sendEcho}>Send to Go</button>
+            <div className="bridge-value">{echoReply}</div>
+          </div>
+        </div>
+
+        <div className="bridge-card">
+          <div className="bridge-label">GetSystemStatus (Go backend health)</div>
+          <button onClick={checkStatus}>Ping Go Backend</button>
+          <div className="bridge-value">{status}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default App

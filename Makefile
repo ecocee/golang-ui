@@ -1,7 +1,7 @@
 .PHONY: build test lint race clean
 
 build:
-	go build -o bin/ ./cmd/golang-ui
+	go build -o glyra ./cmd/glyra
 
 test:
 	go test -count=1 ./...
