@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ecocee/golang-ui/pkg/api"
 	"github.com/webview/webview_go"
 )
 
@@ -17,6 +18,17 @@ import (
 //
 //go:embed frontend
 var frontendFS embed.FS
+
+// SystemService is an example backend service to demonstrate the API Bridge.
+type SystemService struct{}
+
+func (s *SystemService) GetStatus() string {
+	return "All systems optimal. Go backend running perfectly!"
+}
+
+func (s *SystemService) Echo(msg string) string {
+	return "Go received: " + msg
+}
 
 func main() {
 	isDev := os.Getenv("GLYRA_DEV") == "true"
@@ -53,15 +65,9 @@ func main() {
 	w.SetTitle("{{.ProjectName}}")
 	w.SetSize(900, 650, webview.HintNone)
 
-	// Bridge: exposes Go functions to the frontend as window.GetSystemStatus()
-	// and window.Echo(). The frontend calls these from JS to demonstrate
-	// the Go ↔ webview bridge.
-	w.Bind("GetSystemStatus", func() string {
-		return "All systems optimal. Go backend running perfectly!"
-	})
-	w.Bind("Echo", func(msg string) string {
-		return fmt.Sprintf("Go received: %s", msg)
-	})
+	// Register backend services into the API Bridge
+	registry := api.NewRegistry(w)
+	registry.Register("System", &SystemService{})
 
 	w.Navigate("http://127.0.0.1:8080")
 	w.Run()

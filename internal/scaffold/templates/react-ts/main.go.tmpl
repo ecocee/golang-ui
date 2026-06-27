@@ -8,11 +8,24 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/ecocee/golang-ui/pkg/api"
 	"github.com/webview/webview_go"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
+
+// SystemService is an example backend service to demonstrate the API Bridge.
+type SystemService struct{}
+
+func (s *SystemService) GetStatus() string {
+	return "All systems optimal. Go backend running perfectly!"
+}
+
+func (s *SystemService) Echo(msg string) string {
+	return "Go received: " + msg
+}
 
 func serveFallback(subFS fs.FS) http.Handler {
 	fsSrv := http.FileServer(http.FS(subFS))
@@ -33,11 +46,13 @@ func main() {
 	w.SetTitle("{{.Title}}")
 	w.SetSize(900, 650, webview.HintNone)
 
-	w.Bind("GetSystemStatus", func() string {
-		return "All systems optimal. Go backend running perfectly!"
-	})
+	// Register backend services into the API Bridge
+	registry := api.NewRegistry(w)
+	registry.Register("System", &SystemService{})
 
 	if isDev {
+		// Generate the TypeScript bindings on startup during dev mode
+		registry.GenerateTS("frontend/src/api.ts")
 		w.Navigate("http://localhost:5173")
 		fmt.Println("Glyra Backend started in DEV mode.")
 	} else {

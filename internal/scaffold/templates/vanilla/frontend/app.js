@@ -14,7 +14,7 @@ const echoReply = document.getElementById('echoReply')
 echoBtn.addEventListener('click', async () => {
   const msg = echoInput.value || '(empty)'
   try {
-    const reply = await window.Echo(msg)
+    const reply = await window.System_Echo(msg)
     echoReply.textContent = reply
   } catch (err) {
     echoReply.textContent = 'Error: ' + err.message
@@ -28,7 +28,7 @@ const pingButton = document.getElementById('pingButton')
 pingButton.addEventListener('click', async () => {
   statusBox.textContent = 'Pinging…'
   try {
-    const res = await window.GetSystemStatus()
+    const res = await window.System_GetStatus()
     statusBox.textContent = res
   } catch (err) {
     statusBox.textContent = 'Error: Cannot reach Go backend.'
@@ -48,7 +48,7 @@ function setBridgeConnected(ok) {
 // Probe the bridge on load. window.Echo / window.GetSystemStatus are
 // injected by the Go backend via w.Bind(…).
 function probeBridge() {
-  const ok = typeof window.Echo === 'function' && typeof window.GetSystemStatus === 'function'
+  const ok = typeof window.System_Echo === 'function' && typeof window.System_GetStatus === 'function'
   setBridgeConnected(ok)
   if (!ok) {
     statusBox.textContent = '⚠ Go bridge not available'
