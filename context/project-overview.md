@@ -101,3 +101,21 @@ The user of this library is a **developer**, not an end-user. Their flow:
 | Component library feels incomplete | Medium | Prioritize the 20% of components that cover 80% of use cases. Ship primitives first. |
 | Performance doesn't hit 60fps target | Medium | Benchmark early. Profile hot paths. Use object pooling for layout nodes. |
 | Low adoption | Medium | Ship fast, document well, engage Go community early. |
+
+---
+
+# NEW PROJECT SCOPE (GLYRA) - ADDED JUN 2026
+
+## Rebranding & Pivot
+
+The project has completely pivoted from a pure "Go Fyne library" into **Glyra**, a powerful Desktop App Scaffolding Engine.
+Rather than attempting to rewrite Flexbox and DOM rendering engines in raw Go (which proved impossible or buggy with Fyne), Glyra fully embraces **Web Technologies** (React, Next.js, Vanilla HTML) via `webview_go`.
+
+## New Goals
+
+1. **The Ultimate DX**: Developers scaffold a complete cross-platform app using `glyra init`, with full Next.js/React tooling already configured.
+2. **Flutter-like Hot Reload**: `glyra dev` proxies web requests and executes native C bindings to achieve instantaneous hot-reloading for both Go logic and Frontend DOM edits.
+3. **Zero Configuration Packaging**: `glyra build` natively compiles OS-specific metadata (Icons, Plists, Syso) without requiring the developer to install heavy toolchains.
+
+## Revised Roadmap
+Please see [plan.md](./plan.md) for the active and professional roadmap for the Glyra era, including Upcoming versions focusing on API Bridging, Monetization Licenses, and CLI Component generation.

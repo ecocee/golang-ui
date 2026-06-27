@@ -5,6 +5,7 @@ go 1.26.2
 require (
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.0.4
+	github.com/webview/webview_go v0.0.0-20240831120633-6173450d4dd6
 )
 
 require (

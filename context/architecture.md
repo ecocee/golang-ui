@@ -30,3 +30,22 @@
 2. **Go is Thread-Safe**: Any state accessed by the `internal/bridge/` layer must be protected by a `sync.Mutex` or `sync.RWMutex`, because WebView bindings can be invoked concurrently.
 3. **No External Web Server**: The WebView should ideally load assets from a data URI or a local custom scheme, preventing the need to open a local HTTP port (which can trigger firewall warnings).
 4. **Component-wise CSS**: Each UI component (Button, Card, Input) must have its own isolated CSS file in `frontend/css/components/` to prevent styling conflicts.
+
+---
+
+# NEW ARCHITECTURE (GLYRA CLI) - ADDED JUN 2026
+
+## Hybrid Dev Architecture
+
+During development (`glyra dev`), the architecture dynamically splits to provide a Flutter-like Hot Reload experience:
+
+- **Frontend Proxying**: The Go backend does NOT use `//go:embed` in Dev Mode. Instead, it natively proxies to a background Vite/Next.js HMR server (`localhost:5173`), or it directly serves `os.DirFS` for Vanilla templates.
+- **Background Watcher**: `internal/cli/dev.go` executes a continuous filesystem poll.
+  - If a `.go` file is modified, the watcher natively recompiles the backend to a hidden binary (`.glyra-dev-bin`) and swaps the processes seamlessly.
+  - If an `.html` or `.css` file is modified in Vanilla mode, the watcher fires a hidden HTTP GET to `/__glyra_reload`. The Go backend intercepts this and triggers a `w.Dispatch()` execution of `window.location.reload()`, refreshing the DOM without killing the window process.
+
+## Build Pipeline Architecture
+
+During production (`glyra build`), the architecture intercepts the compilation to enforce Native Desktop Standards:
+- **macOS**: Go binary is relocated inside a dynamically generated `.app/Contents/MacOS` bundle. `sips` and `iconutil` run as child processes to compile user-provided PNGs into `.icns` files and bind them via `Info.plist`.
+- **Windows**: Invokes `go-winres` via `go run` to attach a `.syso` Windows resource payload (handling Taskbar icons) and injects the `-H=windowsgui` linker flag to suppress the command prompt.
