@@ -1,0 +1,16 @@
+package src
+
+import "fmt"
+
+// SystemService is an example backend service to demonstrate the API Bridge.
+// Every exported method becomes callable from the frontend as
+// window.System_<Method>(). Duplicate this file to add your own services.
+type SystemService struct{}
+
+func (s *SystemService) GetStatus() string {
+	return "All systems optimal. Go backend running perfectly!"
+}
+
+func (s *SystemService) Echo(msg string) string {
+	return fmt.Sprintf("Go received: %s", msg)
+}

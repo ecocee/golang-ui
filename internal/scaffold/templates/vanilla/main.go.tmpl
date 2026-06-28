@@ -2,12 +2,12 @@ package main
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
 	"time"
 
+	"{{.ModulePath}}/src"
 	"github.com/ecocee/golang-ui/pkg/api"
 	"github.com/webview/webview_go"
 )
@@ -16,38 +16,36 @@ import (
 // compiled app is a single portable file — no frontend/ folder needed
 // alongside it at runtime.
 //
-//go:embed frontend
+//go:embed all:frontend
 var frontendFS embed.FS
-
-// SystemService is an example backend service to demonstrate the API Bridge.
-type SystemService struct{}
-
-func (s *SystemService) GetStatus() string {
-	return "All systems optimal. Go backend running perfectly!"
-}
-
-func (s *SystemService) Echo(msg string) string {
-	return "Go received: " + msg
-}
 
 func main() {
 	isDev := os.Getenv("GLYRA_DEV") == "true"
 
-	var assets http.FileSystem
-	if isDev {
-		assets = http.Dir("frontend")
-	} else {
-		sub, err := fs.Sub(frontendFS, "frontend")
-		if err != nil {
-			panic(err)
-		}
-		assets = http.FS(sub)
-	}
-
 	w := webview.New(true)
 	defer w.Destroy()
 
+	w.SetTitle("{{.Title}}")
+	w.SetSize(900, 650, webview.HintNone)
+
+	// Register backend services into the API Bridge. Add your own services
+	// under src/ and register them here, e.g.
+	//   registry.Register("Auth", &src.AuthService{})
+	registry := api.NewRegistry(w)
+	registry.Register("System", &src.SystemService{})
+
 	go func() {
+		var assets http.FileSystem
+		if isDev {
+			assets = http.Dir("frontend")
+		} else {
+			sub, err := fs.Sub(frontendFS, "frontend")
+			if err != nil {
+				panic(err)
+			}
+			assets = http.FS(sub)
+		}
+
 		mux := http.NewServeMux()
 		mux.Handle("/", http.FileServer(assets))
 		if isDev {
@@ -61,13 +59,6 @@ func main() {
 		_ = http.ListenAndServe("127.0.0.1:8080", mux)
 	}()
 	time.Sleep(100 * time.Millisecond) // give the local server a moment to bind
-
-	w.SetTitle("{{.ProjectName}}")
-	w.SetSize(900, 650, webview.HintNone)
-
-	// Register backend services into the API Bridge
-	registry := api.NewRegistry(w)
-	registry.Register("System", &SystemService{})
 
 	w.Navigate("http://127.0.0.1:8080")
 	w.Run()

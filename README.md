@@ -168,13 +168,16 @@ Because the frontend runs inside a native webview, bindings are available direct
 
 ## 📁 Project Structure
 
-A scaffolded React project looks like this:
+A scaffolded project keeps the framework wiring and your logic in separate places:
 
 ```
 my-app/
 ├── go.mod
-├── main.go              # Go backend + webview bootstrap
-└── frontend/
+├── go.sum
+├── main.go                  # thin entrypoint — wires the window, registers services
+├── src/
+│   └── system.go            # your backend logic — add more files here as you scale
+└── frontend/                # your web UI (template-specific)
     ├── package.json
     ├── vite.config.js
     ├── index.html
@@ -184,6 +187,12 @@ my-app/
         ├── App.css
         └── index.css
 ```
+
+`main.go` is intentionally thin — it only wires the webview window and registers your
+backend services. You rarely edit it. All your logic lives under `src/` as service
+structs: register each in `main.go` and every exported method becomes callable from the
+frontend as `window.<Service>_<Method>()`. Your project scales by adding files to `src/`,
+not by growing a single entrypoint.
 
 <br />
 

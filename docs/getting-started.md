@@ -15,13 +15,41 @@ Create a new app by running:
 ```bash
 glyra init my-app
 ```
-You will be prompted to enter a human-readable **App Title** (e.g. "My Awesome App") and choose a frontend framework:
+You'll be prompted to choose a frontend framework:
 1. **Vite + React (TypeScript)** - [Recommended]
 2. **Vite + React (JavaScript)**
 3. **Next.js (Static Export)**
-4. **Vanilla HTML/CSS/JS**
+4. **Svelte (Vite)**
+5. **Vanilla HTML/CSS/JS**
 
-The CLI will generate all necessary files, initialize a Go module, and run `npm install` automatically.
+The CLI generates the project, initializes a Go module, and runs `npm install` automatically.
+
+### Project structure
+
+A scaffolded project keeps the framework wiring and your logic in separate places:
+
+```
+my-app/
+├── go.mod
+├── go.sum
+├── main.go                  # thin entrypoint — wires the window, registers services
+├── src/
+│   └── system.go            # your backend logic (services)
+└── frontend/                # your web UI (template-specific)
+    └── ...
+```
+
+**`main.go`** is intentionally thin: it creates the webview window, serves your
+frontend, and registers your backend services with the API bridge. You rarely need to
+edit it — it's Glyra's wiring, not your code.
+
+**`src/`** is where your logic lives. Each file defines one or more *services* — plain
+Go structs with exported methods. Register a service once in `main.go` and every method
+becomes callable from the frontend as `window.<Service>_<Method>()`. To add a new
+capability, add a new file under `src/` and register it. Your project scales by adding
+files, not by growing a single `main.go`.
+
+See [API Reference](api.md) for how the Go ↔ JavaScript bridge works.
 
 ## Development Mode & Hot Reloading
 

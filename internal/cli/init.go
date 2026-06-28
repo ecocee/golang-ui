@@ -37,6 +37,7 @@ func runInit(args []string) error {
 						huh.NewOption("⚛️  Vite + React (TypeScript) [Recommended]", "react-ts"),
 						huh.NewOption("⚛️  Vite + React (JavaScript)", "react"),
 						huh.NewOption("▲  Next.js (Static Export)", "nextjs"),
+						huh.NewOption("🧡 Svelte (Vite)", "svelte"),
 						huh.NewOption("🌐 Vanilla HTML / CSS / JS", "vanilla"),
 					).
 					Value(&choice),
@@ -47,7 +48,7 @@ func runInit(args []string) error {
 			return err
 		}
 	} else {
-		fmt.Print("Select template  1) React TS  2) React JS  3) Next.js  4) Vanilla HTML/CSS/JS  [1]: ")
+		fmt.Print("Select template  1) React TS  2) React JS  3) Next.js  4) Svelte  5) Vanilla HTML/CSS/JS  [1]: ")
 		reader := bufio.NewReader(os.Stdin)
 		choice, _ = reader.ReadString('\n')
 		choice = strings.TrimSpace(choice)
@@ -58,7 +59,9 @@ func runInit(args []string) error {
 		tmpl = scaffold.React
 	case "3", "nextjs":
 		tmpl = scaffold.NextJS
-	case "4", "vanilla":
+	case "4", "svelte":
+		tmpl = scaffold.Svelte
+	case "5", "vanilla":
 		tmpl = scaffold.Vanilla
 	default:
 		tmpl = scaffold.ReactTS
@@ -66,8 +69,10 @@ func runInit(args []string) error {
 
 	title := name
 
-	// Scaffold.
-	if err := scaffold.New(name, title, tmpl); err != nil {
+	// Scaffold. ModulePath matches the module name that initGoModule writes
+	// into go.mod (the project name), so cmd/<name>/main.go can import
+	// "<name>/src" and resolve it against the project's own module.
+	if err := scaffold.New(name, title, name, tmpl); err != nil {
 		return err
 	}
 
@@ -104,6 +109,8 @@ func scaffoldTree(name string, tmpl scaffold.Template) []string {
 	if tmpl == scaffold.React {
 		return []string{
 			"main.go",
+			"src/",
+			"  system.go",
 			"frontend/",
 			"  package.json",
 			"  vite.config.js",
@@ -117,6 +124,8 @@ func scaffoldTree(name string, tmpl scaffold.Template) []string {
 	}
 	return []string{
 		"main.go",
+		"src/",
+		"  system.go",
 		"frontend/",
 		"  index.html",
 		"  style.css",

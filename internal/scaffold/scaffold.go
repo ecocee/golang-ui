@@ -20,6 +20,7 @@ const (
 	React   Template = "react"
 	ReactTS Template = "react-ts"
 	NextJS  Template = "nextjs"
+	Svelte  Template = "svelte"
 	Vanilla Template = "vanilla"
 )
 
@@ -28,11 +29,14 @@ type Data struct {
 	ProjectName string // used for package names or directory names
 	PackageName string // lowercased, npm-safe form of ProjectName
 	Title       string // Human readable app title for window and HTML
+	ModulePath  string // Go module path; lets cmd/<name>/main.go import <ModulePath>/src
 }
 
 // New scaffolds a brand new Glyra project named `name` on disk using
-// `tmpl`, then initializes its Go module.
-func New(name, title string, tmpl Template) error {
+// `tmpl`, then initializes its Go module. modulePath is the Go module path
+// written into go.mod (typically the project name); it lets the generated
+// cmd/<name>/main.go import the project's own src/ package.
+func New(name, title, modulePath string, tmpl Template) error {
 	if _, err := os.Stat(name); err == nil {
 		return fmt.Errorf("directory %q already exists", name)
 	}
@@ -41,6 +45,7 @@ func New(name, title string, tmpl Template) error {
 		ProjectName: name,
 		PackageName: strings.ToLower(name),
 		Title:       title,
+		ModulePath:  modulePath,
 	}
 
 	fmt.Printf("⚡ Scaffolding %s template...\n", tmpl)
@@ -53,7 +58,9 @@ func New(name, title string, tmpl Template) error {
 
 // copyTemplate walks the embedded template directory `tmpl`, rendering
 // every *.tmpl file through text/template and copying everything else
-// into the destination directory byte-for-byte.
+// into the destination directory byte-for-byte. Template syntax in
+// directory and file names (e.g. cmd/{{.ProjectName}}) is also rendered,
+// so dynamic paths resolve alongside file contents.
 func copyTemplate(tmpl, dest string, data Data) error {
 	root := filepath.Join("templates", tmpl)
 
@@ -70,7 +77,13 @@ func copyTemplate(tmpl, dest string, data Data) error {
 			return nil
 		}
 
-		target := filepath.Join(dest, strings.TrimSuffix(rel, ".tmpl"))
+		// Render template syntax in the path itself (both dirs and files),
+		// then strip the .tmpl suffix to get the on-disk target.
+		renderedRel, err := renderPath(rel, data)
+		if err != nil {
+			return fmt.Errorf("rendering path %s: %w", rel, err)
+		}
+		target := filepath.Join(dest, strings.TrimSuffix(renderedRel, ".tmpl"))
 
 		if d.IsDir() {
 			return os.MkdirAll(target, 0o755)
@@ -85,7 +98,7 @@ func copyTemplate(tmpl, dest string, data Data) error {
 			return err
 		}
 
-		if !strings.HasSuffix(path, ".tmpl") {
+		if !strings.HasSuffix(renderedRel, ".tmpl") {
 			return os.WriteFile(target, raw, 0o644)
 		}
 
@@ -102,4 +115,25 @@ func copyTemplate(tmpl, dest string, data Data) error {
 
 		return t.Execute(f, data)
 	})
+}
+
+// renderPath renders template syntax (e.g. {{.ProjectName}}) in every
+// segment of rel, so dynamic directory names like cmd/{{.ProjectName}} resolve
+// correctly. Each segment is rendered independently so template errors
+// reference a short, meaningful name.
+func renderPath(rel string, data Data) (string, error) {
+	rel = filepath.ToSlash(rel)
+	parts := strings.Split(rel, "/")
+	for i, p := range parts {
+		t, err := template.New("path").Parse(p)
+		if err != nil {
+			return "", err
+		}
+		var buf strings.Builder
+		if err := t.Execute(&buf, data); err != nil {
+			return "", err
+		}
+		parts[i] = buf.String()
+	}
+	return filepath.FromSlash(strings.Join(parts, "/")), nil
 }

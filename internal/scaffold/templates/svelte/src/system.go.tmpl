@@ -1,0 +1,16 @@
+package src
+
+// SystemService is an example backend service to demonstrate the API Bridge.
+// Every exported method becomes callable from the frontend as
+// window.System_<Method>(). In dev mode Glyra also generates typed bindings
+// for these methods in frontend/src/api.ts. Duplicate this file to add your
+// own services.
+type SystemService struct{}
+
+func (s *SystemService) GetStatus() string {
+	return "All systems optimal. Go backend running perfectly!"
+}
+
+func (s *SystemService) Echo(msg string) string {
+	return "Go received: " + msg
+}

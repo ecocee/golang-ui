@@ -3,11 +3,12 @@ package main
 import (
 	"embed"
 	"flag"
-	"fmt"
 	"io/fs"
 	"net/http"
 	"time"
 
+	"{{.ModulePath}}/src"
+	"github.com/ecocee/golang-ui/pkg/api"
 	"github.com/webview/webview_go"
 )
 
@@ -26,23 +27,19 @@ func main() {
 	w := webview.New(true)
 	defer w.Destroy()
 
-	w.SetTitle("{{.ProjectName}}")
+	w.SetTitle("{{.Title}}")
 	w.SetSize(900, 650, webview.HintNone)
 
-	// Bridge: exposes Go functions to React as window.GetSystemStatus() and
-	// window.Echo(). The frontend calls these from JS to demonstrate the
-	// Go ↔ webview bridge.
-	w.Bind("GetSystemStatus", func() string {
-		return "All systems optimal. Go backend running perfectly!"
-	})
-	w.Bind("Echo", func(msg string) string {
-		return fmt.Sprintf("Go received: %s", msg)
-	})
+	// Register backend services into the API Bridge. Add your own services
+	// under src/ and register them here, e.g.
+	//   registry.Register("Auth", &src.AuthService{})
+	registry := api.NewRegistry(w)
+	registry.Register("System", &src.SystemService{})
 
 	if *dev {
 		w.Navigate("http://localhost:5173")
 	} else {
-		assets, err := fs.Sub(distFS, "frontend/dist")
+		assets, err := fs.Sub(distFS, "dist")
 		if err != nil {
 			panic(err)
 		}

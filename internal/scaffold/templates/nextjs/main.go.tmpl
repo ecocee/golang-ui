@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"{{.ModulePath}}/src"
 	"github.com/ecocee/golang-ui/pkg/api"
 	"github.com/webview/webview_go"
 )
@@ -16,17 +17,8 @@ import (
 //go:embed all:frontend/out
 var assets embed.FS
 
-// SystemService is an example backend service to demonstrate the API Bridge.
-type SystemService struct{}
-
-func (s *SystemService) GetStatus() string {
-	return "Next.js successfully talking to Go Backend!"
-}
-
-func (s *SystemService) Echo(msg string) string {
-	return "Go received: " + msg
-}
-
+// serveFallback serves the static Next.js export, mapping clean paths to their
+// .html files and falling back to index.html otherwise.
 func serveFallback(subFS fs.FS) http.Handler {
 	fsSrv := http.FileServer(http.FS(subFS))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +28,7 @@ func serveFallback(subFS fs.FS) http.Handler {
 		} else if !strings.HasSuffix(path, ".html") {
 			path = path + ".html"
 		}
-		
+
 		_, err := fs.Stat(subFS, path)
 		if os.IsNotExist(err) {
 			r.URL.Path = "/"
@@ -55,17 +47,20 @@ func main() {
 	w.SetTitle("{{.Title}}")
 	w.SetSize(900, 650, webview.HintNone)
 
-	// Register backend services into the API Bridge
+	// Register backend services into the API Bridge. Add your own services
+	// under src/ and register them here, e.g.
+	//   registry.Register("Auth", &src.AuthService{})
 	registry := api.NewRegistry(w)
-	registry.Register("System", &SystemService{})
+	registry.Register("System", &src.SystemService{})
 
 	if isDev {
-		// Generate the TypeScript bindings on startup during dev mode
+		// Generate the TypeScript bindings on startup during dev mode so the
+		// frontend gets typed window.System_* calls.
 		registry.GenerateTS("frontend/src/api.ts")
 		w.Navigate("http://localhost:3000")
 		fmt.Println("Glyra Backend started in DEV mode.")
 	} else {
-		subFS, _ := fs.Sub(assets, "frontend/out")
+		subFS, _ := fs.Sub(assets, "out")
 		go func() {
 			http.Handle("/", serveFallback(subFS))
 			http.ListenAndServe("127.0.0.1:8080", nil)
